@@ -12,7 +12,9 @@ def Sigmoid(x):
     return (1 / (1 + np.exp(-x)))
 
 def Sigmoid_derivative(x):
-    return (Sigmoid(x)*(1-Sigmoid(x)))
+    s = Sigmoid(x)
+    ds = s*(1-s)
+    return ds
 
 def ReLU(x):
     return np.maximum(0, x)
@@ -29,3 +31,7 @@ def tanh_derivative(x):
 
 def Softmax(x):
     return np.exp(x - np.max(x))/(np.sum(np.exp(x - np.max(x))))
+
+def Softmax_derivative(x):
+    s = x.reshape(-1,1)
+    return np.diagflat(s) - np.dot(s, s.T)

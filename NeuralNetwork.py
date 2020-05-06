@@ -1,68 +1,69 @@
 # -*- coding: utf-8 -*-
 """
+Created on Tue Apr 28 11:03:48 2020
+
+@author: Shreya Date
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Fri Apr 24 18:00:26 2020
 
 @author: Shreya Date
 """
 
+import numpy
 import struct as st
 import numpy as np
+import scipy.special
 import ActivationFunctions as af
 
 class NeuralNetwork:
-    
-    def __init__(self, input_nodes, hidden_nodes, output_nodes):
-        self.input_nodes   = input_nodes
-        self.hidden_nodes  = hidden_nodes
-        self.output_nodes  = output_nodes
-        self.weights_ih    = np.zeros((hidden_nodes, input_nodes)) 
-        self.weights_ho    = np.zeros((output_nodes, hidden_nodes))
-        self.learning_rate = 0.1 
-        
-    def feedForward(self, input):
-        hidden = np.dot(self.weights_ih, input)     # get wx
-        hidden = af.Sigmoid(hidden)                 # activation function
-        output = np.dot(self.weights_ho, hidden)
-        output = af.Sigmoid(output)
-        return input, hidden, output
-    
-    def train(self, x, y):
-        inputs, hidden, yPred = self.feedForward(x)
-        
-        # calculate output errors
-        output_errors = np.subtract(y, yPred)
-        
-        # calculate gradient
-        gradients = np.vectorize(af.Sigmoid_derivative)(yPred)
-        print("sigmoid_derivative: ", gradients)
-        gradients    = np.dot(gradients, output_errors)
-        gradients    = np.multiply(gradients, self.learning_rate)
-        
-        print("old weights_ih: ", self.weights_ih)
-        print("old weights_ho: ", self.weights_ho)
+       
+    def __init__(self, inputnodes, hiddennodes, outputnodes, learningrate):
+        self.inodes = inputnodes
+        self.hnodes = hiddennodes
+        self.onodes = outputnodes
 
-        # calculate deltas
-        hidden_t  = np.transpose(hidden)
-        weights_ho_delta = np.multiply(gradients, hidden_t)
-        self.weights_ho = np.add(self.weights_ho, weights_ho_delta)
+        self.weights_ih    = np.random.normal(0.0, pow(self.inodes, -0.5),(self.hnodes, self.inodes))
+        self.weights_ho    = np.random.normal(0.0, pow(self.hnodes, -0.5),(self.onodes, self.hnodes))
+
+        self.lr = learningrate
+        self.activation_function = lambda x: af.Sigmoid(x)
         
-        # Calculate hidden layer errors
-        weights_ho_t  = np.transpose(self.weights_ho)
-        hidden_errors = np.dot(weights_ho_t, output_errors)
-        hidden_gradients = np.vectorize(af.Sigmoid_derivative)(hidden_t)
+        self.bias_h = np.ones((self.hnodes, 1))
+        self.bias_o = np.ones((self.onodes, 1))
+
+
+    def train(self, inputs, targets):    
+        inputs = numpy.array(inputs, ndmin=2).T
+        targets = numpy.array(targets, ndmin=2).T
+           
+        hidden_inputs    = np.dot(self.weights_ih, inputs) + self.bias_h
+        hidden_outputs   = self.activation_function(hidden_inputs)
         
-        # Calculate hidden gradient
-        hidden_gradients = np.dot(hidden_gradients, hidden_errors)
-        hidden_gradients    = np.multiply(hidden_gradients, self.learning_rate)
+        final_inputs     = np.dot(self.weights_ho, hidden_outputs) + self.bias_o
+        final_outputs    = self.activation_function(final_inputs)
         
-        # Calculate input->hidden deltas
-        inputs_t = np.transpose(inputs)
-        weights_ih_delta = np.multiply(hidden_gradients, inputs_t)
-        self.weights_ih = np.add(self.weights_ih, weights_ih_delta)
+        output_errors    = targets - final_outputs
+        hidden_errors    = np.dot(self.weights_ho.T, output_errors)
         
-        print("updated weights_ih: ", self.weights_ih)
-        print("updated weights_ho: ", self.weights_ho)
+        output_gradients = output_errors * final_outputs * (1.0 - final_outputs)        
+        self.weights_ho += self.lr * np.dot(output_gradients, np.transpose(hidden_outputs))
+        self.bias_o      =  self.bias_o + output_gradients
         
-        print(self.weights_ih.shape)
-        print(self.weights_ho.shape)
+        hidden_gradients = hidden_errors * hidden_outputs * (1.0 - hidden_outputs)
+        self.weights_ih += self.lr * np.dot(hidden_gradients, np.transpose(inputs))
+        self.bias_h      =  self.bias_h + hidden_gradients
         
+        
+    def predict(self, inputs):
+        hidden_inputs  = np.dot(self.weights_ih, inputs)
+        hidden_outputs = self.activation_function(hidden_inputs)
+
+        final_inputs   = np.dot(self.weights_ho, hidden_outputs)
+        final_outputs  = self.activation_function(final_inputs)
+
+        return final_outputs
+    
+   

@@ -12,15 +12,24 @@ xTrain = yTrain = xTest = yTest = np.empty(0)
 
 def setup():  
     global xTrain, yTrain, xTest, yTest 
-    nn = NeuralNetwork(2, 2, 1)
-    print("data: ", xTrain, xTrain.shape)
-    i = 0
-    for data in xTrain:
-        print("data: ", data, data.shape)
-        print(yTrain[i])
-        nn.train(xTrain[i], yTrain[i]) 
-        i = i + 1
+    nn = NeuralNetwork(2, 4, 1, 0.1)
 
+    for j in range (100000):
+        nn.train([0,0], [0])
+        nn.train([0,1], [1])
+        nn.train([1,0], [1])
+        nn.train([1,1], [0])
+             
+    o1 = nn.predict([0,0])
+    o2 = nn.predict([0,1])
+    o3 = nn.predict([1,0])
+    o4 = nn.predict([1,1])
+     
+    print(o1)
+    print(o2)
+    print(o3)
+    print(o4)
+ 
 def init():
     global xTrain, yTrain, xTest, yTest 
     
